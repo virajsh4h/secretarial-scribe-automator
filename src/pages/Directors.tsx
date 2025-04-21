@@ -115,11 +115,24 @@ const Directors = () => {
   };
 
   const onSubmit = (data: z.infer<typeof directorSchema>) => {
+    // Ensure all required fields are present
+    const directorData: Director = {
+      name: data.name,
+      din: data.din,
+      pan: data.pan,
+      dateOfBirth: data.dateOfBirth,
+      dateOfAppointment: data.dateOfAppointment,
+      residentialAddress: data.residentialAddress,
+      email: data.email,
+      phone: data.phone,
+      designation: data.designation,
+    };
+    
     if (editingDirector && editingDirector.id) {
-      updateDirector(editingDirector.id, data);
+      updateDirector(editingDirector.id, directorData);
       toast.success('Director updated successfully');
     } else {
-      addDirector(data);
+      addDirector(directorData);
       toast.success('Director added successfully');
     }
     setIsDialogOpen(false);

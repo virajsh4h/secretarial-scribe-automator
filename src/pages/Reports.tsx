@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   BarChart,
@@ -252,7 +251,12 @@ const Reports = () => {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => [`${value} shares (${((value/totalShares)*100).toFixed(2)}%)`, 'Shares']} />
+                        <Tooltip 
+                          formatter={(value: number) => [
+                            `${value} shares (${((value/totalShares)*100).toFixed(2)}%)`, 
+                            'Shares'
+                          ]} 
+                        />
                         <Legend />
                       </PieChartComponent>
                     </ResponsiveContainer>

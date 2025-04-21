@@ -68,7 +68,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { generateFormText, generateAnnualReturn, generateDownloadableDocument } from '@/utils/documentGenerator';
 import { Badge } from '@/components/ui/badge';
 
 const filingSchema = z.object({
@@ -115,9 +114,13 @@ const Filings = () => {
   };
 
   const onSubmit = (data: z.infer<typeof filingSchema>) => {
+    // Create a properly typed FilingReport object
     const filingData: FilingReport = {
-      ...data,
+      name: data.name,
+      formNumber: data.formNumber,
+      dueDate: data.dueDate,
       filingDate: data.filingDate || undefined,
+      status: data.status,
     };
     
     if (editingFiling && editingFiling.id) {

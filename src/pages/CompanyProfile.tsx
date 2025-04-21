@@ -53,7 +53,21 @@ const CompanyProfile = () => {
   });
 
   const onSubmit = (data: z.infer<typeof companySchema>) => {
-    setCompanyDetails(data);
+    // Ensure all required fields are present with their correct types
+    const companyData: CompanyDetails = {
+      name: data.name,
+      cin: data.cin,
+      registrationDate: data.registrationDate,
+      registeredAddress: data.registeredAddress,
+      authorizedCapital: data.authorizedCapital,
+      paidUpCapital: data.paidUpCapital,
+      email: data.email,
+      phone: data.phone,
+      website: data.website || undefined,
+      financialYearEnd: data.financialYearEnd,
+    };
+    
+    setCompanyDetails(companyData);
     toast.success('Company profile saved successfully');
   };
 

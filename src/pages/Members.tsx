@@ -112,11 +112,23 @@ const Members = () => {
   };
 
   const onSubmit = (data: z.infer<typeof memberSchema>) => {
+    // Ensure all required fields are present
+    const memberData: Member = {
+      name: data.name,
+      folioNumber: data.folioNumber,
+      pan: data.pan,
+      address: data.address,
+      email: data.email,
+      phone: data.phone,
+      numberOfShares: data.numberOfShares,
+      percentageHolding: data.percentageHolding,
+    };
+    
     if (editingMember && editingMember.id) {
-      updateMember(editingMember.id, data);
+      updateMember(editingMember.id, memberData);
       toast.success('Member updated successfully');
     } else {
-      addMember(data);
+      addMember(memberData);
       toast.success('Member added successfully');
     }
     setIsDialogOpen(false);
