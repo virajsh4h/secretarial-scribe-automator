@@ -31,6 +31,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/directors', label: 'Directors', icon: <Users className="h-5 w-5" /> },
     { path: '/members', label: 'Members', icon: <Users className="h-5 w-5" /> },
     { path: '/meetings', label: 'Meetings', icon: <Calendar className="h-5 w-5" /> },
+    { path: '/transactions', label: 'Business Transactions', icon: <FileText className="h-5 w-5" /> },
     { path: '/filings', label: 'ROC Filings', icon: <FileText className="h-5 w-5" /> },
     { path: '/generate', label: 'Generate Documents', icon: <FileOutput className="h-5 w-5" /> },
     { path: '/reports', label: 'Reports', icon: <ClipboardList className="h-5 w-5" /> },
