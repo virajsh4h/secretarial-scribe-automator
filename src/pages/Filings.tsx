@@ -68,6 +68,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { generateAnnualReturn } from '@/utils/documentGenerator';
 import { Badge } from '@/components/ui/badge';
 
 const filingSchema = z.object({
