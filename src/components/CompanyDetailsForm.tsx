@@ -29,7 +29,7 @@ const companySchema = z.object({
     .min(1, 'Name is required'),
   incorporationDate: z
     .string()
-    .refine(val => !isNaN(new Date(val)), 'Invalid date'),
+    .refine(val => !isNaN(Date.parse(val)), 'Invalid date'),
   website: z
     .string()
     .url('Must be a valid URL')
