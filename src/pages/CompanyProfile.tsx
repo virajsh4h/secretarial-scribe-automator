@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,24 +20,58 @@ import { Input } from '@/components/ui/input';
 import { useCompany } from '@/context/CompanyContext';
 import { CompanyDetails } from '@/types';
 
+// Create schema for company form validation
 const companySchema = z.object({
-  name: z.string().min(2, { message: 'Company name must be at least 2 characters.' }),
-  cin: z.string().min(21, { message: 'CIN must be 21 characters.' }).max(21),
-  registrationDate: z.string().min(1, { message: 'Registration date is required.' }),
+  // Corporate Identification Number - must be 21 chars, start with U and contain only uppercase letters and digits
+  cin: z.string()
+    .length(21, { message: 'CIN must be 21 characters.' })
+    .regex(/^U[A-Z0-9]{20}$/, { 
+      message: 'CIN must start with U and contain only uppercase letters and digits.' 
+    }),
+  
+  // Company name - required
+  name: z.string().min(1, { message: 'Company name is required.' }),
+  
+  // Date of incorporation - required and must be a valid date
+  registrationDate: z.string()
+    .refine(val => !isNaN(new Date(val).getTime()), { 
+      message: "Invalid date" 
+    }),
+  
+  // Registered address - required with minimum length
   registeredAddress: z.string().min(5, { message: 'Address must be at least 5 characters.' }),
-  authorizedCapital: z.coerce.number().min(1, { message: 'Authorized capital must be greater than 0.' }),
-  paidUpCapital: z.coerce.number().min(1, { message: 'Paid-up capital must be greater than 0.' }),
-  email: z.string().email({ message: 'Invalid email address.' }),
-  phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
-  website: z.string().url({ message: 'Invalid website URL.' }).optional().or(z.literal('')),
+  
+  // Financial year end - required
   financialYearEnd: z.string().min(1, { message: 'Financial year end date is required.' }),
+  
+  // Authorized capital - must be a positive number
+  authorizedCapital: z.coerce.number().min(1, { message: 'Authorized capital must be greater than 0.' }),
+  
+  // Paid-up capital - must be a positive number
+  paidUpCapital: z.coerce.number().min(1, { message: 'Paid-up capital must be greater than 0.' }),
+  
+  // Email - must be valid email format
+  email: z.string().email({ message: 'Invalid email address.' }),
+  
+  // Phone - basic validation for length
+  phone: z.string().min(10, { message: 'Phone number must be at least 10 digits.' }),
+  
+  // Website - optional but must be valid URL if provided
+  website: z.string().url({ message: 'Invalid website URL.' }).optional().or(z.literal('')),
 });
+
+// Create type based on the schema
+type CompanyFormValues = z.infer<typeof companySchema>;
 
 const CompanyProfile = () => {
   const { companyState, setCompanyDetails } = useCompany();
   const existingData = companyState.companyDetails || {} as CompanyDetails;
 
-  const form = useForm<z.infer<typeof companySchema>>({
+  // State for file upload
+  const [coiFile, setCoiFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
     defaultValues: {
       name: existingData.name || '',
@@ -50,10 +85,60 @@ const CompanyProfile = () => {
       website: existingData.website || '',
       financialYearEnd: existingData.financialYearEnd || '',
     },
+    mode: 'onChange', // Validate on change for better UX
   });
 
-  const onSubmit = (data: z.infer<typeof companySchema>) => {
-    // Ensure all required fields are present with their correct types
+  // Handle file validation
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    setFileError(null);
+    
+    if (!selectedFile) {
+      setCoiFile(null);
+      return;
+    }
+
+    // Check file type
+    if (selectedFile.type !== 'application/pdf') {
+      setFileError('Only PDF files are accepted');
+      setCoiFile(null);
+      return;
+    }
+
+    // Check file size (2MB = 2 * 1024 * 1024 bytes)
+    if (selectedFile.size > 2 * 1024 * 1024) {
+      setFileError('File size must be less than 2MB');
+      setCoiFile(null);
+      return;
+    }
+
+    setCoiFile(selectedFile);
+  };
+
+  // Remove selected file
+  const removeFile = () => {
+    setCoiFile(null);
+    setFileError(null);
+  };
+
+  const onSubmit = (data: CompanyFormValues) => {
+    // Validate required file
+    if (!coiFile) {
+      setFileError('Certificate of Incorporation is required');
+      return;
+    }
+
+    // Create FormData for file upload and other fields
+    const formData = new FormData();
+    formData.append('coi', coiFile);
+    
+    // Append all form values to FormData
+    Object.entries(data).forEach(([key, value]) => {
+      formData.append(key, String(value));
+    });
+    
+    // For demonstration, we'll still use the context to save the form data
+    // In a real app, you would send formData to your API
     const companyData: CompanyDetails = {
       name: data.name,
       cin: data.cin,
@@ -67,9 +152,18 @@ const CompanyProfile = () => {
       financialYearEnd: data.financialYearEnd,
     };
     
+    // Save to context
     setCompanyDetails(companyData);
-    toast.success('Company profile saved successfully');
+    
+    // Show success toast
+    toast.success('Company details saved successfully!');
+    
+    // Console log FormData for debugging purposes
+    console.log('Form data to be sent:', formData);
+    console.log('File to be uploaded:', coiFile);
   };
+
+  const isFormValid = form.formState.isValid && !fileError && coiFile !== null;
 
   return (
     <div className="space-y-6">
@@ -232,7 +326,44 @@ const CompanyProfile = () => {
                 />
               </div>
 
-              <Button type="submit" className="bg-corporate-600 hover:bg-corporate-700">
+              {/* Certificate of Incorporation File Upload */}
+              <div className="space-y-2">
+                <FormLabel htmlFor="coi">Certificate of Incorporation</FormLabel>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    id="coi" 
+                    type="file" 
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                    className="flex-1"
+                  />
+                  {coiFile && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      onClick={removeFile}
+                      className="h-10 w-10 rounded-full"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                {coiFile && (
+                  <p className="text-sm text-muted-foreground">
+                    {coiFile.name} ({(coiFile.size / (1024 * 1024)).toFixed(2)} MB)
+                  </p>
+                )}
+                {fileError && (
+                  <p className="text-sm font-medium text-destructive">{fileError}</p>
+                )}
+              </div>
+
+              <Button 
+                type="submit" 
+                className="bg-corporate-600 hover:bg-corporate-700"
+                disabled={!isFormValid}
+              >
                 Save Company Profile
               </Button>
             </form>
@@ -244,3 +375,26 @@ const CompanyProfile = () => {
 };
 
 export default CompanyProfile;
+
+// Simple test for CIN validation:
+/*
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import CompanyProfile from './CompanyProfile';
+
+test('CIN field rejects too-short strings', async () => {
+  render(<CompanyProfile />);
+  
+  // Find the CIN input field
+  const cinInput = screen.getByLabelText(/CIN/i);
+  
+  // Type an invalid CIN (too short)
+  await userEvent.type(cinInput, 'U12345');
+  
+  // Trigger validation by clicking outside
+  await userEvent.tab();
+  
+  // Check for error message
+  expect(screen.getByText(/CIN must be 21 characters/i)).toBeInTheDocument();
+});
+*/
